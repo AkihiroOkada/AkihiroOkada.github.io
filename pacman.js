@@ -6,7 +6,6 @@ let enemyPos = [//0:blue 1:red 2:green 3:fakemoney
   { x: 0, y: 0, dir: "right", priority: { "right": 2, "left": 3, "up": 0, "down": 1 } },
   { x: 0, y: 0, dir: "right", priority: { "right": 3, "left": 0, "up": 1, "down": 2 } },
 ];
-
 let area = //0:なし　1:パックマン 2:ブロック 3~6:敵 7:エサ
   [[1, 0, 0, 0, 0, 0, 3, 0],
   [0, 2, 2, 0, 2, 2, 2, 0],
@@ -16,117 +15,49 @@ let area = //0:なし　1:パックマン 2:ブロック 3~6:敵 7:エサ
   [0, 2, 2, 0, 2, 2, 2, 0],
   [0, 0, 0, 6, 2, 2, 2, 0],
   [0, 0, 0, 0, 0, 0, 5, 0]];
-
 let score = 0;//得点
 let time = 0;//時間
+let delayCount = 0;//各敵スピード調整用
 
 //DOC要素取得
 let itemPac = document.getElementById("pac");
 let field = document.getElementById("field");
 
-//矢印キーでスクロールしないようにする
-// window.onload = function() {
-//   window.addEventListener('keydown', keydownfunc, true);
-// }
-
-// var keydownfunc = function( event ) {
-//   var code = event.keyCode;
-//     switch(code) {
-//     case 37: // ←
-//     case 38: // ↑
-//     case 39: // →
-//     case 40: // ↓
-//       event.preventDefault();
-//       console.log(code);
-//   }
-// }
-
-
+//イベントリスナー設定
 window.addEventListener("keydown", movePacman, true);
-
-
-function movePacman(info) {
-  let oldPacX = pacPos.x;
-  let oldPacY = pacPos.y;
-
-  // 進行方向に回転　座標移動
-  switch (info.key) {
-    case "ArrowUp":/* ↑ */
-      info.preventDefault();
-      pacPos.y -= 1;
-      itemPac.style.transform = "rotate(90deg)";
-      break;
-
-    case "ArrowDown":/* ↓ */
-      info.preventDefault();
-      pacPos.y += 1;
-      itemPac.style.transform = "rotate(270deg)";
-      break;
-
-    case "ArrowRight":/* → */
-      info.preventDefault();
-      pacPos.x += 1;
-      itemPac.style.transform = "rotate(180deg)";
-      break;
-
-    case "ArrowLeft":/* ← */
-      info.preventDefault();
-      pacPos.x -= 1;
-      itemPac.style.transform = "rotate(0deg)";
-      break;
-
-    default:
-      break;
-  };
-
-  /* エリア最大値対策 */
-  if (pacPos.x < 0) {
-    pacPos.x = 0;
-  } else if (pacPos.x > (area[0].length - 1)) {
-    pacPos.x = area[0].length - 1;
-  } else if (pacPos.y < 0) {
-    pacPos.y = 0;
-  } else if (pacPos.y > (area.length - 1)) {
-    pacPos.y = area.length - 1;
-  } else if (area[pacPos.y][pacPos.x] === 2) {//　ブロック対策
-    pacPos.y = oldPacY;
-    pacPos.x = oldPacX;
-  } else if ((area[pacPos.y][pacPos.x] >= 3) && (area[pacPos.y][pacPos.x] <= 6)) {//敵に当たった
-    lostMoney(area[pacPos.y][pacPos.x]);
-    pacPos.y = oldPacY;
-    pacPos.x = oldPacX;
-  } else {//進行方向に進む
-    if (area[pacPos.y][pacPos.x] === 7) {//金ゲット
-      getMoney();
-      field.removeChild(document.getElementById("money" + pacPos.y + pacPos.x));
-    }
-    area[oldPacY][oldPacX] = 0;
-    area[pacPos.y][pacPos.x] = 1;
-    itemPac.style.top = `${(pacPos.y + 1) * 16}px`;
-    itemPac.style.left = `${(pacPos.x + 1) * 16}px`;
-  }
-}
-
-function lostMoney(enemyNum) {
-  score -= 5;//スコア減点
-  if (score < 0) {
-    score = 0;
-  }
-  itemPac.style.filter = "hue-rotate(-60deg)";//パックマンを赤っぽくする
-  window.setTimeout(function () { itemPac.style.filter = "hue-rotate(0deg)"; }, 500);//500ms後に元に戻す
-  if (enemyNum === 6) {
-    smileFakemoney();
-  }
-}
-
-function smileFakemoney() {
-  document.getElementById("enemy4").src = "image/enemy/fakemoney.png";
-  window.setTimeout(function () { document.getElementById("enemy4").src = "image/money.png"; }, 500);
-}
 
 //初期画面作成
 document.body.classList.add("dark-theme");
 makeField();
+
+//10ms毎に実行する処理
+window.setInterval(function () {
+  //ゲーム終了検知
+  if (!finishDetect()) {
+    document.getElementById("score").innerText = score;//スコア反映
+    time++;
+    document.getElementById("time").innerText = time / 100;//時間反映
+  }
+
+  delayCount++;
+  if (delayCount % 3 === 0) {/* 30ms毎 */
+    moveEnemy(0)
+  }
+  if (delayCount % 7 === 0) {/* 70ms毎 */
+    moveEnemy(1)
+  }
+  if (delayCount % 13 === 0) {/* 130ms毎 */
+    moveEnemy(2)
+  }
+  if (delayCount % 30 === 0) {/* 300ms毎 */
+    moveEnemy(3)
+  }
+}, 10)
+
+
+/**
+ * フィールド(HTML)の各エレメントを配置する
+ */
 function makeField() {
   for (let i = 0; i < 10; i++) {
     for (let j = 0; j < 10; j++) {
@@ -200,9 +131,95 @@ function makeField() {
   }
 }
 
+/**
+ * パックマンが移動する
+ * @param {number} info 押下したキーの情報
+ */
+function movePacman(info) {
+  let oldPacX = pacPos.x;
+  let oldPacY = pacPos.y;
 
-function getMoney() {
-  score++;
+  // 進行方向に回転　座標移動
+  switch (info.key) {
+    case "ArrowUp":/* ↑ */
+      info.preventDefault();
+      pacPos.y -= 1;
+      itemPac.style.transform = "rotate(90deg)";
+      break;
+
+    case "ArrowDown":/* ↓ */
+      info.preventDefault();
+      pacPos.y += 1;
+      itemPac.style.transform = "rotate(270deg)";
+      break;
+
+    case "ArrowRight":/* → */
+      info.preventDefault();
+      pacPos.x += 1;
+      itemPac.style.transform = "rotate(180deg)";
+      break;
+
+    case "ArrowLeft":/* ← */
+      info.preventDefault();
+      pacPos.x -= 1;
+      itemPac.style.transform = "rotate(0deg)";
+      break;
+
+    default:
+      break;
+  };
+
+  /* エリア最大値対策 */
+  if (pacPos.x < 0) {
+    pacPos.x = 0;
+  } else if (pacPos.x > (area[0].length - 1)) {
+    pacPos.x = area[0].length - 1;
+  } else if (pacPos.y < 0) {
+    pacPos.y = 0;
+  } else if (pacPos.y > (area.length - 1)) {
+    pacPos.y = area.length - 1;
+  } else if (area[pacPos.y][pacPos.x] === 2) {//　ブロック対策
+    pacPos.y = oldPacY;
+    pacPos.x = oldPacX;
+  } else if ((area[pacPos.y][pacPos.x] >= 3) && (area[pacPos.y][pacPos.x] <= 6)) {//敵に当たった
+    lostMoney(area[pacPos.y][pacPos.x]);
+    pacPos.y = oldPacY;
+    pacPos.x = oldPacX;
+  } else {//進行方向に進む
+    if (area[pacPos.y][pacPos.x] === 7) {//金ゲット
+      score++;
+      field.removeChild(document.getElementById("money" + pacPos.y + pacPos.x));
+    }
+    area[oldPacY][oldPacX] = 0;
+    area[pacPos.y][pacPos.x] = 1;
+    itemPac.style.top = `${(pacPos.y + 1) * 16}px`;
+    itemPac.style.left = `${(pacPos.x + 1) * 16}px`;
+  }
+}
+
+/**
+ * スコアを減点してパックマンを赤くする
+ * fakemoneyとぶつかった場合はfakemoneyの画像を切り替える
+ * @param {number} enemyNum 敵の数字 3:blue 4:red 5:green 6:fakemoney
+ */
+function lostMoney(enemyNum) {
+  score -= 5;//スコア減点
+  if (score < 0) {
+    score = 0;
+  }
+  itemPac.style.filter = "hue-rotate(-60deg)";//パックマンを赤っぽくする
+  window.setTimeout(function () { itemPac.style.filter = "hue-rotate(0deg)"; }, 500);//500ms後に元に戻す
+  if (enemyNum === 6) {
+    smileFakemoney();
+  }
+}
+
+/**
+ * fake moneyがニヤッとする
+ */
+function smileFakemoney() {
+  document.getElementById("enemy4").src = "image/enemy/fakemoney.png";
+  window.setTimeout(function () { document.getElementById("enemy4").src = "image/money.png"; }, 500);
 }
 
 /**
@@ -210,49 +227,14 @@ function getMoney() {
  * @returns {boolean} エサがあるかどうか 
  */
 function finishDetect() {
-  //.filterを使った書き方
   return area.filter(array => array.filter(num => num === 7).length > 0).length === 0;
-
-  //for文で回す従来の書き方
-  for (let i = 0; i < 8; i++) {
-    for (let j = 0; j < 8; j++) {
-      if (area[i][j] === 7) {
-        return false;
-      }
-    }
-  }
-  return true;
 }
 
 
-let timeCount = 0;
-window.setInterval(function () {
-  //ゲーム終了検知
-  if (finishDetect()) {
-    // location.href = "annouce.html";
-  } else {
-    document.getElementById("score").innerText = score;//スコア反映
-
-    time++;
-    document.getElementById("time").innerText = time / 100;//時間反映
-  }
-
-  timeCount++;
-  if (timeCount % 3 === 0) {
-    moveEnemy(0)
-  }
-  if (timeCount % 7 === 0) {
-    moveEnemy(1)
-  }
-  if (timeCount % 13 === 0) {
-    moveEnemy(2)
-  }
-  if (timeCount % 30 === 0) {
-    moveEnemy(3)
-  }
-}, 10)
-
-
+/**
+ * 敵が移動する
+ * @param {number} enemyNum 敵の数字 0:blue 1:red 2:green 3:fakemoney
+ */
 function moveEnemy(enemyNum) {
   let oldX = 0;
   let oldY = 0;
@@ -295,8 +277,6 @@ function moveEnemy(enemyNum) {
     enemyPos[enemyNum].y = 112;
   }
 
-
-
   if (((enemyPos[enemyNum].y % 16) === 0) && ((enemyPos[enemyNum].x % 16) === 0)) {
     if (area[Math.floor((oldY + ((oldY - enemyPos[enemyNum].y) * 15)) / 16)][Math.floor((oldX + ((oldX - enemyPos[enemyNum].x) * 15)) / 16)] !== 1) {
       area[Math.floor((oldY + ((oldY - enemyPos[enemyNum].y) * 15)) / 16)][Math.floor((oldX + ((oldX - enemyPos[enemyNum].x) * 15)) / 16)] = 0;
@@ -335,95 +315,104 @@ function moveEnemy(enemyNum) {
 function turnEnemy(enemyNum, y, x) {
   const enemyDir = enemyPos[enemyNum].dir;
   let isPossible = { "all": false, "right": false, "left": false, "up": false, "down": false };
-  let isDeadEnd = false;
 
   /* 行き止まり検知処理 */
-  if ((enemyDir === "right") && (((area[y][x + 1] >= 1) && (area[y][x + 1] <= 6)) || (x === 7))) {
-    if (area[y][x + 1] === 1) {
-      lostMoney(enemyNum + 3);
-    }
-    isDeadEnd = true;
-  } else if ((enemyDir === "left") && (((area[y][x - 1] >= 1) && (area[y][x - 1] <= 6)) || (x === 0))) {
-    if (area[y][x - 1] === 1) {
-      lostMoney(enemyNum + 3);
-    }
-    isDeadEnd = true;
-  } else if (enemyDir === "up") {
-    if (y === 0) {
-      isDeadEnd = true;
-    } else if ((area[y - 1][x] >= 1) && (area[y - 1][x] <= 6)) {
-      isDeadEnd = true;
-      if (area[y - 1][x] === 1) {
+  if ((enemyPos[enemyNum].y % 16 === 0) && (enemyPos[enemyNum].x % 16 === 0)) {
+    isPossible[enemyDir] = true;
+    if ((enemyDir === "right") && (((area[y][x + 1] >= 1) && (area[y][x + 1] <= 6)) || (x === 7))) {
+      if (area[y][x + 1] === 1) {
         lostMoney(enemyNum + 3);
       }
-    }
-  } else if (enemyDir === "down") {
-    if (y === 7) {
-      isDeadEnd = true;
-    } else if ((area[y + 1][x] >= 1) && (area[y + 1][x] <= 6)) {
-      isDeadEnd = true;
-      if (area[y + 1][x] === 1) {
+      isPossible.all = true;
+      isPossible["right"] = false;
+      isPossible["left"] = true;
+    } else if ((enemyDir === "left") && (((area[y][x - 1] >= 1) && (area[y][x - 1] <= 6)) || (x === 0))) {
+      if (area[y][x - 1] === 1) {
         lostMoney(enemyNum + 3);
       }
-    }
-  }
-
-  if ((enemyPos[enemyNum].y % 16 === 0) && (enemyPos[enemyNum].x % 16 === 0) && isDeadEnd) {/* ちょうど真ん中かつ行き止まり */
-    /* 交差点検出処理 */
-    for (const dir of ["right", "left", "up", "down"]) {
-      if (dir !== enemyDir) {/* 今の向き以外 */
-        switch (dir) {
-          case "right":
-            if (x !== 7) {/* 右がエリア外じゃない */
-              if ((area[y][x + 1] === 0) || (area[y][x + 1] === 7)) {/* 右が空または金 */
-                isPossible[dir] = true;
-                isPossible.all = true;
-              }
-            }
-            break;
-
-          case "left":
-            if (x !== 0) {/* 左がエリア外じゃない */
-              if ((area[y][x - 1] === 0) || (area[y][x - 1] === 7)) {/* 左が空または金 */
-                isPossible[dir] = true;
-                isPossible.all = true;
-              }
-            }
-            break;
-
-          case "up":
-            if (y !== 0) {/* 上がエリア外じゃない */
-              if ((area[y - 1][x] === 0) || (area[y - 1][x] === 7)) {/* 上が空または金 */
-                isPossible[dir] = true;
-                isPossible.all = true;
-              }
-            }
-            break;
-
-          case "down":
-            if (y !== 7) {/* 下がエリア外じゃない */
-              if ((area[y + 1][x] === 0) || (area[y + 1][x] === 7)) {/* 下が空または金 */
-                isPossible[dir] = true;
-                isPossible.all = true;
-              }
-            }
-            break;
-
-          default:
-            break;
+      isPossible.all = true;
+      isPossible["right"] = true;
+      isPossible["left"] = false;
+    } else if (enemyDir === "up") {
+      if (y === 0) {
+        isPossible.all = true;
+        isPossible["up"] = false;
+        isPossible["down"] = true;
+      } else if ((area[y - 1][x] >= 1) && (area[y - 1][x] <= 6)) {
+        isPossible.all = true;
+        isPossible["up"] = false;
+        isPossible["down"] = true;
+        if (area[y - 1][x] === 1) {
+          lostMoney(enemyNum + 3);
         }
+      }
+    } else if (enemyDir === "down") {
+      if (y === 7) {
+        isPossible.all = true;
+        isPossible["up"] = true;
+        isPossible["down"] = false;
+      } else if ((area[y + 1][x] >= 1) && (area[y + 1][x] <= 6)) {
+        isPossible.all = true;
+        isPossible["up"] = true;
+        isPossible["down"] = false;
+        if (area[y + 1][x] === 1) {
+          lostMoney(enemyNum + 3);
+        }
+      }
+    }
+
+    /* 交差点検出処理 */
+    const dirStr = ["right", "left", "up", "down"];
+    if (enemyDir === "right" || enemyDir === "left") {
+      dirStr.shift();
+      dirStr.shift();
+    } else {
+      dirStr.pop();
+      dirStr.pop();
+    }
+    for (const dir of dirStr) {
+      switch (dir) {
+        case "right":
+          if (x !== 7) {/* 右がエリア外じゃない */
+            if ((area[y][x + 1] === 0) || (area[y][x + 1] === 7)) {/* 右が空または金 */
+              isPossible[dir] = true;
+              isPossible.all = true;
+            }
+          }
+          break;
+        case "left":
+          if (x !== 0) {/* 左がエリア外じゃない */
+            if ((area[y][x - 1] === 0) || (area[y][x - 1] === 7)) {/* 左が空または金 */
+              isPossible[dir] = true;
+              isPossible.all = true;
+            }
+          }
+          break;
+        case "up":
+          if (y !== 0) {/* 上がエリア外じゃない */
+            if ((area[y - 1][x] === 0) || (area[y - 1][x] === 7)) {/* 上が空または金 */
+              isPossible[dir] = true;
+              isPossible.all = true;
+            }
+          }
+          break;
+        case "down":
+          if (y !== 7) {/* 下がエリア外じゃない */
+            if ((area[y + 1][x] === 0) || (area[y + 1][x] === 7)) {/* 下が空または金 */
+              isPossible[dir] = true;
+              isPossible.all = true;
+            }
+          }
+          break;
+        default:
+          break;
       }
     }
 
     if (isPossible.all) {/* ターン可能なら */
       delete isPossible.all;
-
-
-      let dirNo = {'right':0, 'left':1, 'up':2, 'down':3};
+      let dirNo = { 'right': 0, 'left': 1, 'up': 2, 'down': 3 };
       let exclusionNumber = [];
-      
-      
-      
       for (const key in isPossible) {
         if (!isPossible[key]) {/* ターン不可能だったら */
           exclusionNumber.push(dirNo[key]);
