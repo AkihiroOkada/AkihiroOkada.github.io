@@ -1,0 +1,62 @@
+#pac {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  transform: rotate(90deg);
+}
+
+#field {
+  width: 160px;
+  height: 160px;
+  background-color: black;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  position: relative;
+}
+#scoreBoard {
+  width: 160px;
+  height: 32px;
+  background-color: black;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  position: relative;
+}
+
+#brock {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+#enemy1 {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+#enemy2 {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+#enemy3 {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+#enemy4 {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+.money{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+.dark-theme {
+  background: #000;
+  color: #ddd
+}
