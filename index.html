@@ -4,18 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="pacman.css">
-  <title>パックマン</title>
+  <title>04_akihiro_okada</title>
 </head>
 <body>
-  <div id="field" >
-    <img src="image\pacman\パックマン開.png" id="pac">
-  </div>
-  <div id="scoreBoard">
-    <p>SCORE: <span id="score">0</span></p>
-    <p>TIME(s): <span id="time"></span></p>
-  </div>
+  <section id="pacman">
+    <h1>1) ミニPACMAN？を作ってみました</h1>
+    <div id="field" >
+      <img src="image\pacman\パックマン開.png" id="pac">
+    </div>
+    <div id="scoreBoard">
+      <font size="2">SCORE: <span id="score"></span></font><br>
+      <font size="2">TIME(s): <span id="time"></span></font>
+    </div>
+    <div id="rule">
+      <h3 style="text-align:left;">ルール説明🚫</h3>
+      <p style="text-align:left">
+        ・キーボードの矢印キーでPACMANが移動<br>
+        ・１つのエサにつきスコア +1<br>
+        ・敵にぶつかったらスコア -5<br>
+        ・エサがなくなったらTIME、SCORE変動停止
+      </p>
+    </div>
+    <div id="ingenuity">
+      <h2 style="text-align:left;">作成にあたり工夫したこと😟</h2>
+      <div>
+        <p style="text-align:left" style="margin-bottom: auto">
+          8×8のエリアにあるアイテムを二次元配列で管理することで、<br>
+          PACMANや敵のぶつかりの検知や、エサの有無を判定してゲームを終了する処理を実現。
+        </p>
+        <img src="image\announcement\2.png" width="120%" height="120%" style="text-align:left"><br>
+        <br>
+      </div>
+      <div>
+        <p style="text-align:left">
+          最後に習った「.filterメソッド」を使用することで、土日で作ったコードを簡略化。
+        </p>
+        <img src="image\announcement\3.png" width="160%" height="160%" style="text-align:left">
+        <br>
+      </div>
+    </div>
+  </section>
 
-  <section></section>
+  <section>
+
+  </section>
 
   <script src="pacman.js"></script>
 </body>

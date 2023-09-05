@@ -1,12 +1,13 @@
 //グローバル変数宣言
 let pacPos = { x: 0, y: 0 };
 let enemyPos = [//0:blue 1:red 2:green 3:fakemoney
-  { x: 0, y: 0, dir: "right", priority: { "right": 0, "left": 1, "up": 2, "down": 0 } },
+  { x: 0, y: 0, dir: "left", priority: { "right": 0, "left": 1, "up": 2, "down": 0 } },
   { x: 0, y: 0, dir: "right", priority: { "right": 1, "left": 2, "up": 3, "down": 0 } },
   { x: 0, y: 0, dir: "right", priority: { "right": 2, "left": 3, "up": 0, "down": 1 } },
   { x: 0, y: 0, dir: "right", priority: { "right": 3, "left": 0, "up": 1, "down": 2 } },
 ];
-let area = //0:なし　1:パックマン 2:ブロック 3~6:敵 7:金
+
+let area = //0:なし　1:パックマン 2:ブロック 3~6:敵 7:エサ
   [[1, 0, 0, 0, 0, 0, 3, 0],
   [0, 2, 2, 0, 2, 2, 2, 0],
   [0, 2, 0, 0, 2, 0, 0, 0],
@@ -15,6 +16,7 @@ let area = //0:なし　1:パックマン 2:ブロック 3~6:敵 7:金
   [0, 2, 2, 0, 2, 2, 2, 0],
   [0, 0, 0, 6, 2, 2, 2, 0],
   [0, 0, 0, 0, 0, 0, 5, 0]];
+
 let score = 0;//得点
 let time = 0;//時間
 
@@ -22,29 +24,53 @@ let time = 0;//時間
 let itemPac = document.getElementById("pac");
 let field = document.getElementById("field");
 
+//矢印キーでスクロールしないようにする
+// window.onload = function() {
+//   window.addEventListener('keydown', keydownfunc, true);
+// }
 
-window.addEventListener("keydown", function (info) {
+// var keydownfunc = function( event ) {
+//   var code = event.keyCode;
+//     switch(code) {
+//     case 37: // ←
+//     case 38: // ↑
+//     case 39: // →
+//     case 40: // ↓
+//       event.preventDefault();
+//       console.log(code);
+//   }
+// }
+
+
+window.addEventListener("keydown", movePacman, true);
+
+
+function movePacman(info) {
   let oldPacX = pacPos.x;
   let oldPacY = pacPos.y;
 
   // 進行方向に回転　座標移動
   switch (info.key) {
     case "ArrowUp":/* ↑ */
+      info.preventDefault();
       pacPos.y -= 1;
       itemPac.style.transform = "rotate(90deg)";
       break;
 
     case "ArrowDown":/* ↓ */
+      info.preventDefault();
       pacPos.y += 1;
       itemPac.style.transform = "rotate(270deg)";
       break;
 
     case "ArrowRight":/* → */
+      info.preventDefault();
       pacPos.x += 1;
       itemPac.style.transform = "rotate(180deg)";
       break;
 
     case "ArrowLeft":/* ← */
+      info.preventDefault();
       pacPos.x -= 1;
       itemPac.style.transform = "rotate(0deg)";
       break;
@@ -56,12 +82,12 @@ window.addEventListener("keydown", function (info) {
   /* エリア最大値対策 */
   if (pacPos.x < 0) {
     pacPos.x = 0;
-  } else if (pacPos.x > 7) {
-    pacPos.x = 7;
+  } else if (pacPos.x > (area[0].length - 1)) {
+    pacPos.x = area[0].length - 1;
   } else if (pacPos.y < 0) {
     pacPos.y = 0;
-  } else if (pacPos.y > 7) {
-    pacPos.y = 7;
+  } else if (pacPos.y > (area.length - 1)) {
+    pacPos.y = area.length - 1;
   } else if (area[pacPos.y][pacPos.x] === 2) {//　ブロック対策
     pacPos.y = oldPacY;
     pacPos.x = oldPacX;
@@ -79,7 +105,7 @@ window.addEventListener("keydown", function (info) {
     itemPac.style.top = `${(pacPos.y + 1) * 16}px`;
     itemPac.style.left = `${(pacPos.x + 1) * 16}px`;
   }
-});
+}
 
 function lostMoney(enemyNum) {
   score -= 5;//スコア減点
@@ -179,7 +205,15 @@ function getMoney() {
   score++;
 }
 
+/**
+ * エリアのエサの有無を判定する関数
+ * @returns {boolean} エサがあるかどうか 
+ */
 function finishDetect() {
+  //.filterを使った書き方
+  return area.filter(array => array.filter(num => num === 7).length > 0).length === 0;
+
+  //for文で回す従来の書き方
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
       if (area[i][j] === 7) {
@@ -189,6 +223,7 @@ function finishDetect() {
   }
   return true;
 }
+
 
 let timeCount = 0;
 window.setInterval(function () {
@@ -303,17 +338,17 @@ function turnEnemy(enemyNum, y, x) {
   let isDeadEnd = false;
 
   /* 行き止まり検知処理 */
-  if ((enemyPos[enemyNum].dir === "right") && (((area[y][x + 1] >= 1) && (area[y][x + 1] <= 6)) || (x === 7))) {
+  if ((enemyDir === "right") && (((area[y][x + 1] >= 1) && (area[y][x + 1] <= 6)) || (x === 7))) {
     if (area[y][x + 1] === 1) {
       lostMoney(enemyNum + 3);
     }
     isDeadEnd = true;
-  } else if ((enemyPos[enemyNum].dir === "left") && (((area[y][x - 1] >= 1) && (area[y][x - 1] <= 6)) || (x === 0))) {
+  } else if ((enemyDir === "left") && (((area[y][x - 1] >= 1) && (area[y][x - 1] <= 6)) || (x === 0))) {
     if (area[y][x - 1] === 1) {
       lostMoney(enemyNum + 3);
     }
     isDeadEnd = true;
-  } else if (enemyPos[enemyNum].dir === "up") {
+  } else if (enemyDir === "up") {
     if (y === 0) {
       isDeadEnd = true;
     } else if ((area[y - 1][x] >= 1) && (area[y - 1][x] <= 6)) {
@@ -322,7 +357,7 @@ function turnEnemy(enemyNum, y, x) {
         lostMoney(enemyNum + 3);
       }
     }
-  } else if (enemyPos[enemyNum].dir === "down") {
+  } else if (enemyDir === "down") {
     if (y === 7) {
       isDeadEnd = true;
     } else if ((area[y + 1][x] >= 1) && (area[y + 1][x] <= 6)) {
@@ -381,23 +416,40 @@ function turnEnemy(enemyNum, y, x) {
     }
 
     if (isPossible.all) {/* ターン可能なら */
-      let priorityNum = 10;
-      let confDir = "";
-
       delete isPossible.all;
+
+
+      let dirNo = {'right':0, 'left':1, 'up':2, 'down':3};
+      let exclusionNumber = [];
+      
+      
       
       for (const key in isPossible) {
-
-        if (isPossible[key] && (priorityNum > enemyPos[enemyNum].priority[key])) {
-          priorityNum = enemyPos[enemyNum].priority[key];
-          confDir = key;
+        if (!isPossible[key]) {/* ターン不可能だったら */
+          exclusionNumber.push(dirNo[key]);
         }
       }
-      return confDir;
+
+      let confDirNum = getRandomNum(3, exclusionNumber);
+      return Object.keys(dirNo).find((key) => dirNo[key] === confDirNum);
     } else {
       return enemyDir;/* そのまま */
     }
   } else {
     return enemyDir;/* そのまま */
   }
+}
+
+
+/**
+ * ランダムな値を取得する関数
+ * @param {number} maxNum 0以上maxNum以下の値を生成
+ * @param {array} exclusionNum 取得する範囲から除外したい値
+ */
+function getRandomNum(maxNum, exclusionNum) {
+  let randNum = 0;
+  do {
+    randNum = Math.floor(Math.random() * (maxNum + 1));
+  } while (exclusionNum.includes(randNum));
+  return randNum;
 }

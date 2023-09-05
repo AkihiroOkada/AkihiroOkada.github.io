@@ -16,8 +16,9 @@
   position: relative;
 }
 #scoreBoard {
+  font-size: 2;
   width: 160px;
-  height: 32px;
+  height: auto;
   background-color: black;
   margin-left: auto;
   margin-right: auto;
@@ -59,4 +60,37 @@
 .dark-theme {
   background: #000;
   color: #ddd
+}
+
+#pacman{
+  height: auto;
+}
+
+#rule{
+  font-size: 3;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  position: relative;
+  width: 500px;
+}
+
+#ingenuity{
+  font-size: 3;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  position: relative;
+  width: 500px;
+}
+
+h1{
+  text-align: center;
+}
+h2{
+  text-align: center;
 }
