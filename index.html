@@ -7,46 +7,67 @@
   <title>04_akihiro_okada</title>
 </head>
 <body>
-  <section id="pacman">
-    <h1>1) ミニPACMAN？を作ってみました</h1>
+  <header id="header">
+    <h1>ミニPACMANを作ってみた　　(Akihiro Okada)</h1>
+  </header>
+  
+  <section style="margin-top: 120px;">
     <div id="field" >
       <img src="image\pacman\パックマン開.png" id="pac">
     </div>
     <div id="scoreBoard">
       <font size="2">SCORE: <span id="score"></span></font><br>
       <font size="2">TIME(s): <span id="time"></span></font>
-    </div>
-    <div id="rule">
-      <h3 style="text-align:left;">ルール🚫</h3>
-      <p style="text-align:left">
-        ・キーボードの矢印キーでPACMANが移動<br>
-        ・１つのエサにつきスコア +1<br>
-        ・敵にぶつかったらスコア -5<br>
-        ・エサがなくなったらTIME、SCORE変動停止
-      </p>
-    </div>
-    <div id="ingenuity">
-      <h2 style="text-align:left;">作成にあたり工夫したこと😟</h2>
-      <div>
-        <p style="text-align:left" style="margin-bottom: auto">
-          8×8のエリアにあるアイテムを二次元配列で管理することで、<br>
-          PACMANや敵のぶつかりの検知や、エサの有無を判定してゲームを終了する処理を実現。
-        </p>
-        <img src="image\announcement\2.png" width="120%" height="120%" style="text-align:left"><br>
-        <br>
-      </div>
-      <div>
-        <p style="text-align:left">
-          最後に習った「.filterメソッド」を使用することで、作成していたコードを簡略化。
-        </p>
-        <img src="image\announcement\3.png" width="160%" height="160%" style="text-align:left">
-        <br>
-      </div>
+      <font id="finNotice" size="5"></font>
     </div>
   </section>
-
-  <section>
-
+  <section class="text">
+    <h2 style="text-align:left;">ルール🚫</h2>
+    <p style="text-align:left">
+      ・キーボードの矢印キーでPACMANが移動<br>
+      ・１つのエサにつきスコア +1<br>
+      ・敵にぶつかったらスコア -5<br>
+      ・エサがなくなったらTIME、SCORE変動停止<br><br>
+    </p>
+  </section>
+  <section class="text">
+    <h2 style="text-align:left;">追加したい機能</h2>
+    <div>
+      <p  style="text-align:left">
+        ・効果音を入れる
+        ・コースの選択
+        ・ランダムで敵を配置<br>
+        ・難易度選択(HARD、NONAL、EASY)で敵の動き変更
+      </p>
+    </div>
+  </section>
+  <section class="text">
+    
+    <h2 style="text-align:left;">作成にあたり工夫したこと😟</h2>
+    <div>
+      <p style="text-align:left" style="margin-bottom: auto">
+        8×8のエリアにあるアイテムを二次元配列で管理することで、<br>
+        PACMANや敵のぶつかりの検知や、エサの有無を判定してゲームを終了する処理を実現。
+      </p>
+      <img src="image\announcement\2.png" width="100%" height="100%" style="text-align:left"><br>
+      <br>
+    </div>
+    <div>
+      <p style="text-align:left">
+        最後に習った「.filterメソッド」を使用することで、作成していたコードを簡略化。
+      </p>
+      <img src="image\announcement\3.png" width="100%" height="100%" style="text-align:left">
+      <br>
+    </div>
+  </section>
+  <section class="text">
+    <h2 style="text-align:left;">おわり</h2>
+    <p style="text-align:left">
+      <font size="6">講師の皆様、19期の皆様ありがとうございました！！</font><br>
+      心理的安全性が高く、柔軟に講義を進めて頂いたおかげで、<br>
+      この１か月間スキルを身に着ける事が出来ました！<br>
+      まだまだビギナーレベルなので、まずはフォローアップ期間、モチベーションをそのままキープしつつ、精進したいと思います！！
+    </p>
   </section>
 
   <script src="pacman.js"></script>
