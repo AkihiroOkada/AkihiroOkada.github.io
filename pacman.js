@@ -7,17 +7,20 @@ let enemyPos = [//0:blue 1:red 2:green 3:fakemoney
   { x: 0, y: 0, dir: "right", priority: { "right": 3, "left": 0, "up": 1, "down": 2 } },
 ];
 let area = //0:なし　1:パックマン 2:ブロック 3~6:敵 7:エサ
-  [[1, 0, 0, 0, 0, 0, 3, 0],
-  [0, 2, 2, 0, 2, 2, 2, 0],
-  [0, 2, 0, 0, 2, 0, 0, 0],
-  [0, 0, 0, 4, 2, 0, 0, 0],
-  [0, 2, 2, 0, 0, 0, 0, 0],
-  [0, 2, 2, 0, 2, 2, 2, 0],
-  [0, 0, 0, 6, 2, 2, 2, 0],
-  [0, 0, 0, 0, 0, 0, 5, 0]];
+  [[0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 2, 2, 0, 2, 2, 2, 0, 0],
+  [0, 2, 0, 0, 2, 0, 0, 0, 0],
+  [0, 0, 0, 0, 2, 0, 0, 0, 0],
+  [0, 2, 2, 0, 0, 0, 0, 0, 0],
+  [0, 2, 2, 0, 2, 2, 2, 0, 0],
+  [0, 0, 0, 0, 2, 2, 2, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ];
 let score = 0;//得点
 let time = 0;//時間
 let delayCount = 0;//各敵スピード調整用
+let audioId = 0;//audioエレメント消去用
 const FIELD_SIZE = area.length;//エリア(フィールド)の横縦幅
 const EMPTY = 0;
 const PACMAN = 1;
@@ -27,6 +30,8 @@ const ENEMY2 = 4;
 const ENEMY3 = 5;
 const ENEMY4 = 6;
 const BAIT = 7;
+const SOUND_DAMAGE_LINK = "sound/damage.mp3";
+const SOUND_GET_LINK = "sound/getBait.mp3";
 
 
 //DOC要素取得
@@ -40,37 +45,33 @@ window.addEventListener("keydown", movePacman, true);
 document.body.classList.add("dark-theme");
 makeField();
 
-//10ms毎に実行する処理
-window.setInterval(function () {
-  //ゲーム終了検知
-  if (!finishDetect()) {
-    document.getElementById("score").innerText = score;//スコア反映
-    time++;
-    document.getElementById("time").innerText = time / 100;//時間反映
-  } else {
-    document.getElementById("finNotice").innerText = "FINISH!!";
-  }
-
-  delayCount++;
-  if (delayCount % 3 === 0) {/* 30ms毎 */
-    moveEnemy(0)
-  }
-  if (delayCount % 7 === 0) {/* 70ms毎 */
-    moveEnemy(1)
-  }
-  if (delayCount % 13 === 0) {/* 130ms毎 */
-    moveEnemy(2)
-  }
-  if (delayCount % 30 === 0) {/* 300ms毎 */
-    moveEnemy(3)
-  }
-}, 10)
-
-
 /**
  * フィールド(HTML)の各エレメントを配置する
  */
 function makeField() {
+  field.style.height = (FIELD_SIZE + 2) * 16;
+  field.style.width = (FIELD_SIZE + 2) * 16;
+
+  //敵、パックマンの自動配置
+  for (i = 0; i < 5; i++) {
+    let x = 0;
+    let y = 0;
+    do {
+      x = getRandomNum(FIELD_SIZE - 1, []);
+      y = getRandomNum(FIELD_SIZE - 1, []);
+    } while (area[y][x] !== 0);
+    if (i === 4) {//パックマン
+      area[y][x] = PACMAN;
+      pacPos.x = x;
+      pacPos.y = y;
+      itemPac.style.top = `${(pacPos.y + 1) * 16}px`;
+      itemPac.style.left = `${(pacPos.x + 1) * 16}px`;
+    } else {//敵
+      area[y][x] = i + 3;
+    }
+  }
+  
+
   for (let i = 0; i < (FIELD_SIZE + 2); i++) {
     for (let j = 0; j < (FIELD_SIZE + 2); j++) {
       if ((i === 0) || (i === (FIELD_SIZE + 1)) || (j === 0) || (j === (FIELD_SIZE + 1))) {
@@ -141,6 +142,32 @@ function makeField() {
       }
     }
   }
+
+  //10ms毎に実行する処理
+window.setInterval(function () {
+    //ゲーム終了検知
+    if (!finishDetect()) {
+      document.getElementById("score").innerText = score;//スコア反映
+      time++;
+      document.getElementById("time").innerText = time / 100;//時間反映
+    } else {
+      document.getElementById("finNotice").innerText = "FINISH!!";
+    }
+
+    delayCount++;
+    if (delayCount % 3 === 0) {/* 30ms毎 */
+      moveEnemy(0)
+    }
+    if (delayCount % 7 === 0) {/* 70ms毎 */
+      moveEnemy(1)
+    }
+    if (delayCount % 13 === 0) {/* 130ms毎 */
+      moveEnemy(2)
+    }
+    if (delayCount % 30 === 0) {/* 300ms毎 */
+      moveEnemy(3)
+    }
+  }, 10)
 }
 
 /**
@@ -201,6 +228,7 @@ function movePacman(info) {
     if (area[pacPos.y][pacPos.x] === BAIT) {//金ゲット
       score++;
       field.removeChild(document.getElementById("money" + pacPos.y + pacPos.x));
+      addAudioEffect(SOUND_GET_LINK);//ゲット音を鳴らす
     }
     area[oldPacY][oldPacX] = EMPTY;
     area[pacPos.y][pacPos.x] = PACMAN;
@@ -224,6 +252,8 @@ function lostMoney(enemyNum) {
   if (enemyNum === ENEMY4) {//fake moneyだったら
     smileFakemoney();
   }
+
+  addAudioEffect(SOUND_DAMAGE_LINK);//ダメージ効果音を鳴らす
 }
 
 /**
@@ -451,3 +481,21 @@ function getRandomNum(maxNum, exclusionNum) {
   } while (exclusionNum.includes(randNum));
   return randNum;
 }
+
+/**
+ * 効果音を鳴らす
+ * @param {string} playFileLink 再生する音源ファイルパス
+ * @returns {number} 返り値の説明
+ */
+function addAudioEffect(playFileLink) {
+  //効果音鳴動処理
+  sound = document.createElement("audio");
+  sound.src = playFileLink;
+  sound.id = "audio" + audioId;
+  sound.autoplay = true;
+  field.appendChild(sound);
+  const id = sound.id;
+  const func = () => { field.removeChild(document.getElementById(id)); };
+  window.setTimeout(func, 500);
+  audioId++;
+};
